@@ -8,11 +8,10 @@ from logger import log_event, setup_logger
 from markdown_utils import article_to_markdown
 from openai_uploader import OpenAIUploader
 from scraper import fetch_articles
-from storage import (
+from state_backend import (
     get_article_state,
-    load_state,
+    get_state_backend,
     save_article_markdown,
-    save_state,
     set_article_state,
     sha256_text,
 )
@@ -46,7 +45,15 @@ def main() -> int:
             vector_store_id=config.openai_vector_store_id or "",
         )
 
-    state = load_state(config.state_path)
+    state_backend = get_state_backend(config.state_path)
+    state = state_backend.load()
+
+    log_event(
+        logger,
+        "state_loaded",
+        backend=config.state_backend,
+        article_count=len(state.get("articles", {})),
+    )
 
     articles = fetch_articles(
         base_url=config.support_base_url,
@@ -165,7 +172,14 @@ def main() -> int:
                 error=str(exc),
             )
 
-    save_state(config.state_path, state)
+    state_backend.save(state)
+
+    log_event(
+        logger,
+        "state_saved",
+        backend=config.state_backend,
+        article_count=len(state.get("articles", {})),
+    )
 
     log_event(
         logger,
