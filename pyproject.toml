@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "athena"
+version = "0.1.0"
+description = "OptiBot Mini-Clone"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "Nathan Nguyen", email = "nathan22x3@gmail.com" }
+]
+dependencies = [
+    "beautifulsoup4==4.15.0",
+    "markdownify==1.2.2",
+    "openai>=1.80.0",
+    "python-dotenv==1.2.2",
+    "requests==2.34.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==26.5.1",
+    "pytest==9.0.3",
+]

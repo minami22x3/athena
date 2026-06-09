@@ -1,0 +1,54 @@
+# --- Python ---
+# Byte-compiled / optimised / DLLs
+__pycache__/
+*$py.class
+
+# Distribution / packaging
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.cache
+coverage.xml
+
+# Type checkers
+.mypy_cache/
+.ruff_cache/
+.pyright_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# --- IDEs ---
+# PyCharm / IntelliJ
+.idea/
+
+# VS Code
+.vscode/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Env / secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Misc ---
+*.swp
+*.swo
+*~
