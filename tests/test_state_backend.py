@@ -39,6 +39,29 @@ def test_file_state_backend_save_and_load(tmp_path):
     assert backend.load() == state
 
 
+def test_file_state_backend_save_last_run(tmp_path):
+    state_path = tmp_path / "state.json"
+    last_run_path = tmp_path / "last-run.json"
+
+    backend = FileStateBackend(
+        state_path=state_path,
+        last_run_path=last_run_path,
+    )
+
+    summary = {
+        "status": "success",
+        "added": 1,
+        "updated": 0,
+        "skipped": 34,
+    }
+
+    backend.save_last_run(summary)
+
+    saved = json.loads(last_run_path.read_text(encoding="utf-8"))
+
+    assert saved == summary
+
+
 class FakeResponse:
     def __init__(self, status_code, payload=None, text=""):
         self.status_code = status_code
@@ -71,13 +94,7 @@ def test_gist_state_backend_load(monkeypatch):
         return FakeResponse(200, gist_payload)
 
     monkeypatch.setattr("requests.get", fake_get)
-
-    backend = GistStateBackend(
-        token="fake-token",
-        gist_id="fake-gist-id",
-        filename="state.json",
-    )
-
+    backend = GistStateBackend(token="fake-token", gist_id="fake-gist-id")
     state = backend.load()
 
     assert state["articles"]["123"]["content_hash"] == "abc"
@@ -94,15 +111,42 @@ def test_gist_state_backend_save(monkeypatch):
         return FakeResponse(200, {"ok": True})
 
     monkeypatch.setattr("requests.patch", fake_patch)
-
-    backend = GistStateBackend(
-        token="fake-token",
-        gist_id="fake-gist-id",
-        filename="state.json",
-    )
+    backend = GistStateBackend(token="fake-token", gist_id="fake-gist-id")
 
     backend.save({"articles": {"123": {"content_hash": "abc"}}})
 
     assert calls["url"] == "https://api.github.com/gists/fake-gist-id"
     assert calls["json"]["files"]["state.json"]["content"]
     assert "Bearer fake-token" == calls["headers"]["Authorization"]
+
+
+def test_gist_state_backend_save_last_run(monkeypatch):
+    calls = {}
+
+    def fake_patch(url, headers, json, timeout):
+        calls["url"] = url
+        calls["headers"] = headers
+        calls["json"] = json
+        calls["timeout"] = timeout
+        return FakeResponse(200, {"ok": True})
+
+    monkeypatch.setattr("requests.patch", fake_patch)
+    backend = GistStateBackend(token="fake-token", gist_id="fake-gist-id")
+
+    backend.save_last_run(
+        {
+            "status": "success",
+            "added": 0,
+            "updated": 0,
+            "skipped": 35,
+        }
+    )
+
+    assert calls["url"] == "https://api.github.com/gists/fake-gist-id"
+    assert "Bearer fake-token" == calls["headers"]["Authorization"]
+    assert "last-run.json" in calls["json"]["files"]
+
+    content = calls["json"]["files"]["last-run.json"]["content"]
+    parsed = json.loads(content)
+
+    assert parsed["skipped"] == 35

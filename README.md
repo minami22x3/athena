@@ -18,7 +18,7 @@ job on DigitalOcean Platform.
 cp .env.sample .env
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e .
 ```
 
 Required environment variables:
@@ -27,13 +27,22 @@ Required environment variables:
 OPENAI_API_KEY=
 OPENAI_VECTOR_STORE_ID=
 
-SUPPORT_BASE_URL=https://support.optisigns.com
-ZENDESK_LOCALE=en-us
-MAX_ARTICLES=35
+SUPPORT_BASE_URL="https://support.optisigns.com"
+ZENDESK_LOCALE="en-us"
+MAX_ARTICLES=50
+DATA_DIR="data/articles"
 
-DATA_DIR=data/articles
-STATE_PATH=data/state.json
-DRY_RUN=false
+STATE_BACKEND="file" # Either "file" or "gist"
+STATE_PATH="data/state.json"
+LAST_RUN_PATH="data/last-run.json"
+
+# Required only when STATE_BACKEND="gist"
+GITHUB_GIST_TOKEN=
+GITHUB_GIST_ID=
+GITHUB_GIST_STATE_FILENAME="state.json"
+GITHUB_GIST_LAST_RUN_FILENAME="last-run.json"
+
+DRY_RUN=true
 DELETE_STALE_VECTOR_FILES=true
 ```
 
@@ -74,11 +83,17 @@ This avoids re-uploading identical documents.
 Each support article is stored as a single Markdown file with metadata (including `Article URL`) so the assistant can
 cite the original source. OpenAI Vector Store built-in chunking is used for retrieval.
 
-## Daily job
+## Daily job logs / last run artifact
 
-The scraper-uploader is deployed as a scheduled DigitalOcean App Platform job and runs once per day.
+The scheduled DigitalOcean job writes normal runtime logs to DigitalOcean App Platform. Since DigitalOcean deploy logs
+are not always publicly shareable, the pipeline also writes a sanitized `last-run.json` artifact.
 
-Latest job logs: `TBU`
+- For local backend: `data/last-run.json`
+- For deployment backend: `last-run.json` in the configured GitHub Gist
+
+The artifact includes `added`, `updated`, `skipped`, `failed`, `uploaded_files`, and `total_estimated_chunks`.
+
+Here is [the link to lastest run artifact](https://gist.github.com/minami22x3/df717274809d8b49d1571e51c509ea9e).
 
 ## Playground validation
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from chunking import estimate_chunk_count
 from config import load_config
@@ -21,12 +22,12 @@ def main() -> int:
     logger = setup_logger()
     config = load_config()
 
-    run_started_at = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(timezone.utc).isoformat()
 
     log_event(
         logger,
         "run_started",
-        started_at=run_started_at,
+        started_at=started_at,
         support_base_url=config.support_base_url,
         max_articles=config.max_articles,
         dry_run=config.dry_run,
@@ -172,26 +173,27 @@ def main() -> int:
                 error=str(exc),
             )
 
+    completed_at = datetime.now(timezone.utc).isoformat()
+
+    summary = {
+        "run_id": uuid4().hex,
+        "status": "success" if failed == 0 else "failed",
+        "started_at": started_at,
+        "completed_at": completed_at,
+        "state_backend": config.state_backend,
+        "fetched_articles": len(articles),
+        "added": added,
+        "updated": updated,
+        "skipped": skipped,
+        "failed": failed,
+        "uploaded_files": uploaded_files,
+        "total_estimated_chunks": total_estimated_chunks,
+    }
+
     state_backend.save(state)
+    state_backend.save_last_run(summary)
 
-    log_event(
-        logger,
-        "state_saved",
-        backend=config.state_backend,
-        article_count=len(state.get("articles", {})),
-    )
-
-    log_event(
-        logger,
-        "run_completed",
-        added=added,
-        updated=updated,
-        skipped=skipped,
-        failed=failed,
-        uploaded_files=uploaded_files,
-        total_estimated_chunks=total_estimated_chunks,
-        state_path=config.state_path,
-    )
+    log_event(logger, "run_completed", **summary)
 
     return 0 if failed == 0 else 1
 
