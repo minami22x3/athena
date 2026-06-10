@@ -15,6 +15,7 @@ class Config:
     state_path: str
     last_run_path: str
     state_backend: str
+    github_gist_token: str | None
     github_gist_id: str | None
     github_gist_state_filename: str
     github_gist_last_run_filename: str
@@ -44,6 +45,7 @@ def load_config() -> Config:
         state_backend=os.getenv("STATE_BACKEND", "file"),
         state_path=os.getenv("STATE_PATH", "data/state.json"),
         last_run_path=os.getenv("LAST_RUN_PATH", "data/last-run.json"),
+        github_gist_token=os.getenv("GITHUB_GIST_TOKEN"),
         github_gist_id=os.getenv("GITHUB_GIST_ID"),
         github_gist_state_filename=os.getenv(
             "GITHUB_GIST_STATE_FILENAME", "state.json"

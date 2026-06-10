@@ -8,6 +8,7 @@ from typing import Any, Protocol
 
 import requests
 
+from config import load_config
 from markdown_utils import slugify
 from models import Article
 
@@ -187,19 +188,18 @@ class GistStateBackend:
 
 
 def get_state_backend(state_path: str | Path) -> StateBackend:
-    backend = os.getenv("STATE_BACKEND", "file").strip().lower()
+    config = load_config()
+    backend = config.state_backend.strip().lower()
 
     if backend == "file":
         return FileStateBackend(
             state_path=state_path,
-            last_run_path=os.getenv("LAST_RUN_PATH", "artifacts/last-run.json"),
+            last_run_path=config.last_run_path,
         )
 
     if backend == "gist":
-        token = os.getenv("GITHUB_GIST_TOKEN")
-        gist_id = os.getenv("GITHUB_GIST_ID")
-        state_filename = os.getenv("GITHUB_GIST_STATE_FILENAME", "state.json")
-        last_run_filename = os.getenv("GITHUB_GIST_LAST_RUN_FILENAME", "last-run.json")
+        token = config.github_gist_token
+        gist_id = config.github_gist_id
 
         if not token:
             raise RuntimeError("GITHUB_GIST_TOKEN is required when STATE_BACKEND=gist")
@@ -210,8 +210,8 @@ def get_state_backend(state_path: str | Path) -> StateBackend:
         return GistStateBackend(
             token=token,
             gist_id=gist_id,
-            state_filename=state_filename,
-            last_run_filename=last_run_filename,
+            state_filename=config.github_gist_state_filename,
+            last_run_filename=config.github_gist_last_run_filename,
         )
 
     raise RuntimeError(
